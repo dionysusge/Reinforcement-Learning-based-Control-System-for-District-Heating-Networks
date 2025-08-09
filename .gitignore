@@ -1,0 +1,43 @@
+simulation_results/
+
+offline_data/
+
+efficient_training_results/
+
+analysis/
+
+test_integration_results/
+
+test_training_results/
+
+.vscode
+
+# dymola编译模型后的文件
+dsfinal.txt
+dsin.txt
+dslog.txt
+dsmodel.c
+dsmodelext1.c
+dsmodelext2.c
+dsmodelext3.c
+dsmodelext4.c
+dsres.mat
+buildlog.txt
+.idea/
+
+
+# Python 编译缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 虚拟环境
+venv/
+.env/
+
+# Jupyter Notebook 检查点
+.ipynb_checkpoints/
+
+# 日志 & 临时文件
+*.log
+*.tmp
