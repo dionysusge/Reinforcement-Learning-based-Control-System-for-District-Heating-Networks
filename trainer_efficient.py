@@ -20,6 +20,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import Normal
+from torch.utils.tensorboard import SummaryWriter
 
 
 class ActorCritic(nn.Module):
@@ -50,9 +51,11 @@ class ActorCritic(nn.Module):
         self.actor_mean = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, action_dim),
-            nn.Sigmoid()  # 输出[0,1]范围的动作
+            nn.Linear(hidden_dim, action_dim)
         )
+        
+        # 自定义激活函数：将输出映射到[0.5, 1.0]范围
+        self.action_activation = lambda x: torch.sigmoid(x) * 0.5 + 0.5
         
         self.actor_std = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
@@ -80,7 +83,9 @@ class ActorCritic(nn.Module):
         """
         features = self.shared_layers(state)
         
-        action_mean = self.actor_mean(features)
+        # 使用自定义激活函数输出[0.5, 1.0]范围的动作
+        action_mean_raw = self.actor_mean(features)
+        action_mean = self.action_activation(action_mean_raw)
         action_std = self.actor_std(features) + 1e-3  # 避免标准差为0
         value = self.critic(features)
         
@@ -105,8 +110,8 @@ class ActorCritic(nn.Module):
         action = dist.sample()
         action_log_prob = dist.log_prob(action).sum(dim=-1)
         
-        # 限制动作范围到[0,1]
-        action = torch.clamp(action, 0.0, 1.0)
+        # 限制动作范围到[0.5, 1.0]（50%-100%开度）
+        action = torch.clamp(action, 0.5, 1.0)
         
         return action, action_log_prob
     
@@ -192,28 +197,149 @@ class TrainerEfficient:
         self.episode_lengths = []
         self.training_stats = []
         
-        # 保存路径
-        self.save_dir = config.get('save_dir', 'training_results')
+        # 动作平滑参数
+        self.min_action_change = config.get('min_action_change', 0.05)  # 最小变化量
+        self.max_action_change = config.get('max_action_change', 0.2)   # 最大变化量
+        self.previous_action = None  # 存储上一次的动作
+        
+        # 使用环境的instance_id作为训练会话标号，确保一致性
+        self.session_id = config.get('instance_id', int(time.time() * 1000) % 10000)
+        
+        # 保存路径（使用training_result目录结构）
+        base_training_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'training_result')
+        self.save_dir = os.path.join(base_training_dir, str(self.session_id))
         os.makedirs(self.save_dir, exist_ok=True)
         os.makedirs(os.path.join(self.save_dir, 'models'), exist_ok=True)
         os.makedirs(os.path.join(self.save_dir, 'stats'), exist_ok=True)
         
+        # TensorBoard日志
+        self.tensorboard_dir = os.path.join(self.save_dir, 'tensorboard')
+        os.makedirs(self.tensorboard_dir, exist_ok=True)
+        self.writer = SummaryWriter(log_dir=self.tensorboard_dir)
+        
+        # 记录训练会话信息
+        self.logger.info(f"训练会话ID: {self.session_id}")
+        self.logger.info(f"保存目录: {self.save_dir}")
+        self.logger.info(f"TensorBoard日志: {self.tensorboard_dir}")
+        
+        # 训练步数计数器
+        self.global_step = 0
+        self.episode_count = 0
+        
     def select_action(self, state: np.ndarray) -> Tuple[np.ndarray, float, float]:
         """
-        选择动作
+        选择动作（带动作平滑）
         
         Args:
             state: 当前状态
             
         Returns:
-            Tuple[np.ndarray, float, float]: (动作, 动作对数概率, 状态价值)
+            Tuple[np.ndarray, float, float]: (平滑后的动作, 动作对数概率, 状态价值)
         """
         with torch.no_grad():
             state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-            action, log_prob = self.actor_critic.get_action(state_tensor)
+            raw_action, log_prob = self.actor_critic.get_action(state_tensor)
             _, _, value = self.actor_critic.forward(state_tensor)
             
-            return action.cpu().numpy()[0], log_prob.cpu().item(), value.cpu().item()
+            # 获取原始动作
+            raw_action_np = raw_action.cpu().numpy()[0]
+            
+            # 如果是第一次动作，直接返回
+            if self.previous_action is None:
+                self.previous_action = raw_action_np.copy()
+                return raw_action_np, log_prob.cpu().item(), value.cpu().item()
+            
+            # 应用动作平滑
+            smoothed_action = self._apply_action_smoothing(raw_action_np)
+            
+            # 更新上一次动作
+            self.previous_action = smoothed_action.copy()
+            
+            return smoothed_action, log_prob.cpu().item(), value.cpu().item()
+    
+    def _apply_action_smoothing(self, raw_action: np.ndarray) -> np.ndarray:
+        """
+        应用动作平滑，限制每次动作的变化幅度
+        根据阀门开度的极端情况动态调整变化范围
+        
+        Args:
+            raw_action: 原始动作
+            
+        Returns:
+            np.ndarray: 平滑后的动作
+        """
+        # 计算动作变化
+        action_change = raw_action - self.previous_action
+        
+        # 计算变化幅度
+        change_magnitude = np.abs(action_change)
+        
+        # 对每个阀门应用变化限制
+        smoothed_action = self.previous_action.copy()
+        
+        for i in range(len(action_change)):
+            change = action_change[i]
+            magnitude = change_magnitude[i]
+            current_opening = self.previous_action[i]
+            
+            # 根据当前阀门开度动态调整变化范围
+            min_change, max_change = self._get_dynamic_action_range(current_opening)
+            
+            # 如果变化太小，强制最小变化（保持探索性）
+            if magnitude < min_change and magnitude > 0:
+                # 保持变化方向，但调整到最小变化量
+                direction = np.sign(change)
+                limited_change = direction * min_change
+            # 如果变化太大，限制到最大变化量
+            elif magnitude > max_change:
+                # 保持变化方向，但限制到最大变化量
+                direction = np.sign(change)
+                limited_change = direction * max_change
+            else:
+                # 变化在合理范围内，保持原变化
+                limited_change = change
+            
+            # 应用变化并确保在[0.5, 1.0]范围内（50%-100%开度）
+            new_value = self.previous_action[i] + limited_change
+            smoothed_action[i] = np.clip(new_value, 0.5, 1.0)
+        
+        return smoothed_action
+    
+    def _get_dynamic_action_range(self, current_opening: float) -> Tuple[float, float]:
+        """
+        根据当前阀门开度获取动态的动作变化范围（适配50-100%开度范围）
+        
+        Args:
+            current_opening: 当前阀门开度 [0.5, 1.0]（50%-100%开度）
+            
+        Returns:
+            Tuple[float, float]: (最小变化量, 最大变化量)
+        """
+        # 定义开度阈值（基于50-100%范围）
+        low_threshold = 0.6   # 低开度阈值（60%）
+        high_threshold = 0.85  # 高开度阈值（85%）
+        
+        # 基础变化范围
+        base_min = self.min_action_change  # 0.05
+        base_max = self.max_action_change  # 0.2
+        
+        # 低开度的扩大变化范围（50-60%）
+        low_min = 0.1   # 低开度最小变化量
+        low_max = 0.25  # 低开度最大变化量
+        
+        # 极高开度的微调范围（85-100%）
+        high_min = 0.02     # 极高开度最小变化量
+        high_max = 0.08     # 极高开度最大变化量
+        
+        if current_opening <= low_threshold:
+            # 低开度（50-60%）：给予较大的调整空间，鼓励向上调整
+            return low_min, low_max
+        elif current_opening >= high_threshold:
+            # 极高开度（85-100%）：使用更小的微调范围，精确控制
+            return high_min, high_max
+        else:
+            # 正常开度（60-85%）：使用基础变化范围
+            return base_min, base_max
     
     def store_transition(self, state: np.ndarray, action: np.ndarray, reward: float, 
                         value: float, log_prob: float, done: bool):
@@ -342,12 +468,23 @@ class TrainerEfficient:
         # 清空缓冲区
         self.clear_buffer()
         
-        # 返回统计信息
+        # 计算平均损失
         num_updates = self.update_epochs * (len(states) // self.batch_size)
+        avg_policy_loss = total_policy_loss / max(num_updates, 1)
+        avg_value_loss = total_value_loss / max(num_updates, 1)
+        avg_entropy_loss = total_entropy_loss / max(num_updates, 1)
+        
+        # 记录到TensorBoard
+        self.global_step += 1
+        self.writer.add_scalar('Loss/Policy', avg_policy_loss, self.global_step)
+        self.writer.add_scalar('Loss/Value', avg_value_loss, self.global_step)
+        self.writer.add_scalar('Loss/Entropy', avg_entropy_loss, self.global_step)
+        
+        # 返回统计信息
         return {
-            'policy_loss': total_policy_loss / max(num_updates, 1),
-            'value_loss': total_value_loss / max(num_updates, 1),
-            'entropy_loss': total_entropy_loss / max(num_updates, 1)
+            'policy_loss': avg_policy_loss,
+            'value_loss': avg_value_loss,
+            'entropy_loss': avg_entropy_loss
         }
     
     def clear_buffer(self):
@@ -361,6 +498,37 @@ class TrainerEfficient:
         self.log_probs.clear()
         self.dones.clear()
     
+    def reset_episode(self):
+        """
+        重置episode相关状态
+        """
+        self.previous_action = None
+        self.logger.info("Episode状态已重置，动作平滑机制重新开始")
+    
+    def log_episode_stats(self, episode_reward: float, episode_length: int):
+        """
+        记录episode统计信息到TensorBoard
+        
+        Args:
+            episode_reward: episode奖励
+            episode_length: episode长度
+        """
+        self.episode_count += 1
+        
+        # 记录episode统计
+        self.writer.add_scalar('Episode/Reward', episode_reward, self.episode_count)
+        self.writer.add_scalar('Episode/Length', episode_length, self.episode_count)
+        
+        # 记录平均奖励（最近10个episode）
+        if len(self.episode_rewards) >= 10:
+            recent_avg_reward = np.mean(self.episode_rewards[-10:])
+            self.writer.add_scalar('Episode/Recent_Avg_Reward', recent_avg_reward, self.episode_count)
+        
+        # 记录最佳奖励
+        if self.episode_rewards:
+            best_reward = max(self.episode_rewards)
+            self.writer.add_scalar('Episode/Best_Reward', best_reward, self.episode_count)
+    
     def save_model(self, episode: int):
         """
         保存模型
@@ -369,18 +537,32 @@ class TrainerEfficient:
             episode: 当前episode数
         """
         try:
-            model_path = os.path.join(self.save_dir, 'models', f'model_episode_{episode}.pth')
-            torch.save({
+            # 确保models目录存在
+            models_dir = os.path.join(self.save_dir, 'models')
+            os.makedirs(models_dir, exist_ok=True)
+            
+            model_path = os.path.join(models_dir, f'model_episode_{episode}.pth')
+            
+            # 保存模型状态
+            checkpoint = {
                 'episode': episode,
                 'model_state_dict': self.actor_critic.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict(),
-                'config': self.config
-            }, model_path)
+                'config': self.config,
+                'episode_rewards': self.episode_rewards,
+                'episode_lengths': self.episode_lengths,
+                'global_step': self.global_step,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            torch.save(checkpoint, model_path)
             
             self.logger.info(f"模型已保存: {model_path}")
             
         except Exception as e:
             self.logger.error(f"保存模型失败: {e}")
+            import traceback
+            self.logger.error(f"保存模型错误详情: {traceback.format_exc()}")
     
     def load_model(self, model_path: str):
         """
@@ -426,6 +608,14 @@ class TrainerEfficient:
         except Exception as e:
             self.logger.error(f"保存训练统计失败: {e}")
     
+    def close_tensorboard(self):
+        """
+        关闭TensorBoard writer
+        """
+        if hasattr(self, 'writer') and self.writer is not None:
+            self.writer.close()
+            self.logger.info("TensorBoard writer已关闭")
+    
     def get_training_summary(self) -> Dict[str, Any]:
         """
         获取训练摘要
@@ -444,7 +634,9 @@ class TrainerEfficient:
             'recent_average_reward': np.mean(recent_rewards),
             'best_reward': max(self.episode_rewards),
             'average_episode_length': np.mean(self.episode_lengths) if self.episode_lengths else 0,
-            'total_training_updates': len(self.training_stats)
+            'total_training_updates': len(self.training_stats),
+            'global_step': self.global_step,
+            'episode_count': self.episode_count
         }
 
 

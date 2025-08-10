@@ -1,8 +1,10 @@
 simulation_results/
 
-
+.gitignore
 
 analysis/
+
+training_result/
 
 test_integration_results/
 

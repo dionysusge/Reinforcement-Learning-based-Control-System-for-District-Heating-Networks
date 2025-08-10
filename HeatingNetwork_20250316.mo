@@ -264,7 +264,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-60,-36})));
 
-    Modelica.Blocks.Sources.Constant const4(k=1.000000)
+    Modelica.Blocks.Sources.Constant const4(k=0.572342)
       annotation (Placement(transformation(extent={{-36,-60},{-50,-46}})));
     User F5(
       Length=5.734,
@@ -307,7 +307,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{-228,18},{-208,38}})));
     Modelica.Blocks.Sources.RealExpression realExpression1(y=time/3600)
       annotation (Placement(transformation(extent={{-256,18},{-236,38}})));
-    Modelica.Blocks.Sources.Constant const1(k=0.463971)
+    Modelica.Blocks.Sources.Constant const1(k=0.990000)
       annotation (Placement(transformation(extent={{-232,80},{-218,94}})));
     Pipe pipe6(Length=6, Diameter(displayUnit="mm") = 0.1)
                 "T1"
@@ -364,7 +364,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-64,66})));
 
-    Modelica.Blocks.Sources.Constant const2(k=0.000000)
+    Modelica.Blocks.Sources.Constant const2(k=0.733097)
       annotation (Placement(transformation(extent={{-46,40},{-60,54}})));
     Pipe pipe9(Length=6, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -429,7 +429,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{-210,218},{-190,238}})));
     Modelica.Blocks.Sources.RealExpression realExpression5(y=time/3600)
       annotation (Placement(transformation(extent={{-190,196},{-210,216}})));
-    Modelica.Blocks.Sources.Constant const3(k=1.000000)
+    Modelica.Blocks.Sources.Constant const3(k=0.790000)
       annotation (Placement(transformation(extent={{-194,278},{-180,292}})));
     User F4_2(
       Length=5.734,
@@ -474,7 +474,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{-102,222},{-82,242}})));
     Modelica.Blocks.Sources.RealExpression realExpression6(y=time/3600)
       annotation (Placement(transformation(extent={{-80,200},{-100,220}})));
-    Modelica.Blocks.Sources.Constant const5(k=0.377912)
+    Modelica.Blocks.Sources.Constant const5(k=0.788868)
       annotation (Placement(transformation(extent={{-94,290},{-80,304}})));
     Pipe pipe13(Length=78, Diameter(displayUnit="mm") = 0.2)
                 "T1"
@@ -534,7 +534,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{-10,218},{10,238}})));
     Modelica.Blocks.Sources.RealExpression realExpression7(y=time/3600)
       annotation (Placement(transformation(extent={{10,196},{-10,216}})));
-    Modelica.Blocks.Sources.Constant const6(k=0.075112)
+    Modelica.Blocks.Sources.Constant const6(k=0.500000)
       annotation (Placement(transformation(extent={{-16,282},{-2,296}})));
     User F3_2(
       Length=5.734,
@@ -579,7 +579,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{72,226},{92,246}})));
     Modelica.Blocks.Sources.RealExpression realExpression9(y=time/3600)
       annotation (Placement(transformation(extent={{94,204},{74,224}})));
-    Modelica.Blocks.Sources.Constant const7(k=0.000000)
+    Modelica.Blocks.Sources.Constant const7(k=0.950000)
       annotation (Placement(transformation(extent={{76,290},{90,304}})));
     Pipe pipe16(Length=78, Diameter(displayUnit="mm") = 0.2)
                 "T1"
@@ -640,7 +640,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{300,226},{320,246}})));
     Modelica.Blocks.Sources.RealExpression realExpression2(y=time/3600)
       annotation (Placement(transformation(extent={{322,202},{302,222}})));
-    Modelica.Blocks.Sources.Constant const9(k=0.900000)
+    Modelica.Blocks.Sources.Constant const9(k=0.524678)
       annotation (Placement(transformation(extent={{296,288},{310,302}})));
     Pipe pipe20(Length=8, Diameter(displayUnit="mm") = 0.2)
                 "T1"
@@ -692,7 +692,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={232,94})));
 
-    Modelica.Blocks.Sources.Constant const10(k=0.243682)
+    Modelica.Blocks.Sources.Constant const10(k=0.990000)
       annotation (Placement(transformation(extent={{212,70},{226,84}})));
     Pipe pipe21(Length=36, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -762,7 +762,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={300,26})));
 
-    Modelica.Blocks.Sources.Constant const12(k=0.899279)
+    Modelica.Blocks.Sources.Constant const12(k=0.900000)
       annotation (Placement(transformation(extent={{282,2},{296,16}})));
     User F9_1(
       Length=5.734,
@@ -807,7 +807,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={198,-22})));
 
-    Modelica.Blocks.Sources.Constant const13(k=0.000000)
+    Modelica.Blocks.Sources.Constant const13(k=0.990000)
       annotation (Placement(transformation(extent={{180,-46},{194,-32}})));
 
     Pipe pipe30(Length=20, Diameter(displayUnit="mm") = 0.25)
@@ -856,7 +856,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-56,-138})));
 
-    Modelica.Blocks.Sources.Constant const17(k=0.457149)
+    Modelica.Blocks.Sources.Constant const17(k=0.800000)
       annotation (Placement(transformation(extent={{-76,-164},{-62,-150}})));
     Pipe pipe31(Length=6, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -981,7 +981,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={160,-212})));
 
-    Modelica.Blocks.Sources.Constant const18(k=1.000000)
+    Modelica.Blocks.Sources.Constant const18(k=0.950000)
       annotation (Placement(transformation(extent={{140,-238},{154,-224}})));
     Pipe pipe34(Length=20, Diameter(displayUnit="mm") = 0.25)
                 "T1"
@@ -1036,7 +1036,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-50,-262})));
 
-    Modelica.Blocks.Sources.Constant const19(k=0.923909)
+    Modelica.Blocks.Sources.Constant const19(k=0.750000)
       annotation (Placement(transformation(extent={{-70,-288},{-56,-274}})));
     Pipe pipe36(Length=120, Diameter(displayUnit="mm") = 0.25)
                 "T1"
@@ -1067,7 +1067,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-230,-234})));
 
-    Modelica.Blocks.Sources.Constant const20(k=0.000000)
+    Modelica.Blocks.Sources.Constant const20(k=0.983379)
       annotation (Placement(transformation(extent={{-254,-222},{-240,-208}})));
     Modelica.Blocks.Tables.CombiTable1Ds F11_load(table=[0,-233244; 2,-235752;
           4,-242440; 6,-246202; 8,-252472; 10,-252472; 12,-241604; 14,-232826;
@@ -1115,7 +1115,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-242,-320})));
 
-    Modelica.Blocks.Sources.Constant const21(k=1.000000)
+    Modelica.Blocks.Sources.Constant const21(k=0.550000)
       annotation (Placement(transformation(extent={{-272,-310},{-258,-296}})));
     Modelica.Blocks.Tables.CombiTable1Ds F18_load(table=[0,-233244; 2,-235752;
           4,-242440; 6,-246202; 8,-252472; 10,-252472; 12,-241604; 14,-232826;
@@ -1192,7 +1192,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={90,-326})));
 
-    Modelica.Blocks.Sources.Constant const22(k=0.000000)
+    Modelica.Blocks.Sources.Constant const22(k=0.755188)
       annotation (Placement(transformation(extent={{116,-352},{102,-338}})));
     Pipe pipe41(Length=150, Diameter(displayUnit="mm") = 0.15)
                 "T1"
@@ -1245,7 +1245,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{170,-338},{190,-318}})));
     Modelica.Blocks.Sources.RealExpression realExpression26(y=time/3600)
       annotation (Placement(transformation(extent={{138,-338},{158,-318}})));
-    Modelica.Blocks.Sources.Constant const23(k=1.000000)
+    Modelica.Blocks.Sources.Constant const23(k=0.699999)
       annotation (Placement(transformation(extent={{166,-274},{180,-260}})));
     Pipe pipe43(Length=6, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -1293,7 +1293,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={192,-458})));
 
-    Modelica.Blocks.Sources.Constant const24(k=0.725909)
+    Modelica.Blocks.Sources.Constant const24(k=0.990000)
       annotation (Placement(transformation(extent={{162,-482},{176,-468}})));
     Pipe pipe44(Length=60, Diameter(displayUnit="mm") = 0.15)
                 "T1"
@@ -1346,7 +1346,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-30,-498})));
 
-    Modelica.Blocks.Sources.Constant const25(k=0.724033)
+    Modelica.Blocks.Sources.Constant const25(k=0.950000)
       annotation (Placement(transformation(extent={{2,-524},{-12,-510}})));
     Pipe pipe46(Length=12, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -1372,7 +1372,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-244,-470})));
 
-    Modelica.Blocks.Sources.Constant const26(k=1.000000)
+    Modelica.Blocks.Sources.Constant const26(k=0.500000)
       annotation (Placement(transformation(extent={{-264,-460},{-250,-446}})));
     Modelica.Blocks.Tables.CombiTable1Ds F17_load(table=[0,-233244; 2,-235752;
           4,-242440; 6,-246202; 8,-252472; 10,-252472; 12,-241604; 14,-232826;
@@ -1420,7 +1420,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-360,-358})));
 
-    Modelica.Blocks.Sources.Constant const27(k=0.026289)
+    Modelica.Blocks.Sources.Constant const27(k=0.920000)
       annotation (Placement(transformation(extent={{-392,-384},{-378,-370}})));
     Modelica.Blocks.Tables.CombiTable1Ds F19_load(table=[0,-373190.4; 2,-377203.2;
           4,-387904; 6,-393923.2; 8,-403955.2; 10,-403955.2; 12,-386566.4; 14,-372521.6;
@@ -1774,7 +1774,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{180,228},{200,248}})));
     Modelica.Blocks.Sources.RealExpression realExpression14(y=time/3600)
       annotation (Placement(transformation(extent={{188,200},{168,220}})));
-    Modelica.Blocks.Sources.Constant const11(k=0.030798)
+    Modelica.Blocks.Sources.Constant const11(k=0.920000)
       annotation (Placement(transformation(extent={{186,290},{200,304}})));
     Modelica.Fluid.Sensors.Temperature temperature48(redeclare package Medium
         = Modelica.Media.Water.ConstantPropertyLiquidWater)
@@ -3126,7 +3126,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-60,-36})));
 
-    Modelica.Blocks.Sources.Constant const4(k=1.000000)
+    Modelica.Blocks.Sources.Constant const4(k=0.572342)
       annotation (Placement(transformation(extent={{-36,-60},{-50,-46}})));
     User F5(
       Length=5.734,
@@ -3236,7 +3236,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{-228,18},{-208,38}})));
     Modelica.Blocks.Sources.RealExpression realExpression1(y=time/3600)
       annotation (Placement(transformation(extent={{-256,18},{-236,38}})));
-    Modelica.Blocks.Sources.Constant const1(k=0.463971)
+    Modelica.Blocks.Sources.Constant const1(k=0.990000)
       annotation (Placement(transformation(extent={{-232,80},{-218,94}})));
     Pipe pipe6(Length=6, Diameter(displayUnit="mm") = 0.1)
                 "T1"
@@ -3361,7 +3361,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-64,66})));
 
-    Modelica.Blocks.Sources.Constant const2(k=0.000000)
+    Modelica.Blocks.Sources.Constant const2(k=0.733097)
       annotation (Placement(transformation(extent={{-46,40},{-60,54}})));
     Pipe pipe9(Length=6, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -3448,7 +3448,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{-210,218},{-190,238}})));
     Modelica.Blocks.Sources.RealExpression realExpression5(y=time/3600)
       annotation (Placement(transformation(extent={{-190,196},{-210,216}})));
-    Modelica.Blocks.Sources.Constant const3(k=1.000000)
+    Modelica.Blocks.Sources.Constant const3(k=0.790000)
       annotation (Placement(transformation(extent={{-194,278},{-180,292}})));
     User F4_2(
       Length=5.734,
@@ -3573,7 +3573,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{-102,222},{-82,242}})));
     Modelica.Blocks.Sources.RealExpression realExpression6(y=time/3600)
       annotation (Placement(transformation(extent={{-80,200},{-100,220}})));
-    Modelica.Blocks.Sources.Constant const5(k=0.377912)
+    Modelica.Blocks.Sources.Constant const5(k=0.788868)
       annotation (Placement(transformation(extent={{-94,290},{-80,304}})));
     Pipe pipe13(Length=78, Diameter(displayUnit="mm") = 0.2)
                 "T1"
@@ -3672,7 +3672,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{-10,218},{10,238}})));
     Modelica.Blocks.Sources.RealExpression realExpression7(y=time/3600)
       annotation (Placement(transformation(extent={{10,196},{-10,216}})));
-    Modelica.Blocks.Sources.Constant const6(k=0.075112)
+    Modelica.Blocks.Sources.Constant const6(k=0.500000)
       annotation (Placement(transformation(extent={{-16,282},{-2,296}})));
     User F3_2(
       Length=5.734,
@@ -3864,7 +3864,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{72,226},{92,246}})));
     Modelica.Blocks.Sources.RealExpression realExpression9(y=time/3600)
       annotation (Placement(transformation(extent={{94,204},{74,224}})));
-    Modelica.Blocks.Sources.Constant const7(k=0.000000)
+    Modelica.Blocks.Sources.Constant const7(k=0.950000)
       annotation (Placement(transformation(extent={{76,290},{90,304}})));
     Pipe pipe16(Length=78, Diameter(displayUnit="mm") = 0.2)
                 "T1"
@@ -3971,7 +3971,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{300,226},{320,246}})));
     Modelica.Blocks.Sources.RealExpression realExpression2(y=time/3600)
       annotation (Placement(transformation(extent={{322,202},{302,222}})));
-    Modelica.Blocks.Sources.Constant const9(k=0.900000)
+    Modelica.Blocks.Sources.Constant const9(k=0.524678)
       annotation (Placement(transformation(extent={{296,288},{310,302}})));
     Pipe pipe20(Length=8, Diameter(displayUnit="mm") = 0.2)
                 "T1"
@@ -4086,7 +4086,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={232,94})));
 
-    Modelica.Blocks.Sources.Constant const10(k=0.243682)
+    Modelica.Blocks.Sources.Constant const10(k=0.990000)
       annotation (Placement(transformation(extent={{212,70},{226,84}})));
     Pipe pipe21(Length=36, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -4221,7 +4221,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={300,26})));
 
-    Modelica.Blocks.Sources.Constant const12(k=0.899279)
+    Modelica.Blocks.Sources.Constant const12(k=0.900000)
       annotation (Placement(transformation(extent={{282,2},{296,16}})));
     User F9_1(
       Length=5.734,
@@ -4331,7 +4331,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={198,-22})));
 
-    Modelica.Blocks.Sources.Constant const13(k=0.000000)
+    Modelica.Blocks.Sources.Constant const13(k=0.990000)
       annotation (Placement(transformation(extent={{180,-46},{194,-32}})));
 
     Pipe pipe30(Length=20, Diameter(displayUnit="mm") = 0.25)
@@ -4447,7 +4447,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-56,-138})));
 
-    Modelica.Blocks.Sources.Constant const17(k=0.457149)
+    Modelica.Blocks.Sources.Constant const17(k=0.800000)
       annotation (Placement(transformation(extent={{-76,-164},{-62,-150}})));
     Pipe pipe31(Length=6, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -4572,7 +4572,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={160,-212})));
 
-    Modelica.Blocks.Sources.Constant const18(k=1.000000)
+    Modelica.Blocks.Sources.Constant const18(k=0.950000)
       annotation (Placement(transformation(extent={{140,-238},{154,-224}})));
     Pipe pipe34(Length=20, Diameter(displayUnit="mm") = 0.25)
                 "T1"
@@ -4692,7 +4692,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-50,-262})));
 
-    Modelica.Blocks.Sources.Constant const19(k=0.923909)
+    Modelica.Blocks.Sources.Constant const19(k=0.750000)
       annotation (Placement(transformation(extent={{-70,-288},{-56,-274}})));
     Pipe pipe36(Length=120, Diameter(displayUnit="mm") = 0.25)
                 "T1"
@@ -4723,7 +4723,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-230,-234})));
 
-    Modelica.Blocks.Sources.Constant const20(k=0.000000)
+    Modelica.Blocks.Sources.Constant const20(k=0.983379)
       annotation (Placement(transformation(extent={{-254,-222},{-240,-208}})));
     Modelica.Blocks.Tables.CombiTable1Ds F11_load(table=[0,-280444; 1,-151431; 2,-159137;
           3,-138572; 4,-126893; 5,-131255; 6,-148447; 7,-131398; 8,-132655; 9,-135341;
@@ -4838,7 +4838,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-242,-320})));
 
-    Modelica.Blocks.Sources.Constant const21(k=1.000000)
+    Modelica.Blocks.Sources.Constant const21(k=0.550000)
       annotation (Placement(transformation(extent={{-272,-310},{-258,-296}})));
     Modelica.Blocks.Tables.CombiTable1Ds F18_load(table=[0,-280444; 1,-151431; 2,-159137;
           3,-138572; 4,-126893; 5,-131255; 6,-148447; 7,-131398; 8,-132655; 9,-135341;
@@ -5047,7 +5047,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={90,-326})));
 
-    Modelica.Blocks.Sources.Constant const22(k=0.000000)
+    Modelica.Blocks.Sources.Constant const22(k=0.755188)
       annotation (Placement(transformation(extent={{116,-352},{102,-338}})));
     Pipe pipe41(Length=150, Diameter(displayUnit="mm") = 0.15)
                 "T1"
@@ -5167,7 +5167,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{170,-338},{190,-318}})));
     Modelica.Blocks.Sources.RealExpression realExpression26(y=time/3600)
       annotation (Placement(transformation(extent={{138,-338},{158,-318}})));
-    Modelica.Blocks.Sources.Constant const23(k=1.000000)
+    Modelica.Blocks.Sources.Constant const23(k=0.699999)
       annotation (Placement(transformation(extent={{166,-274},{180,-260}})));
     Pipe pipe43(Length=6, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -5282,7 +5282,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={192,-458})));
 
-    Modelica.Blocks.Sources.Constant const24(k=0.725909)
+    Modelica.Blocks.Sources.Constant const24(k=0.990000)
       annotation (Placement(transformation(extent={{162,-482},{176,-468}})));
     Pipe pipe44(Length=60, Diameter(displayUnit="mm") = 0.15)
                 "T1"
@@ -5402,7 +5402,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-30,-498})));
 
-    Modelica.Blocks.Sources.Constant const25(k=0.724033)
+    Modelica.Blocks.Sources.Constant const25(k=0.950000)
       annotation (Placement(transformation(extent={{2,-524},{-12,-510}})));
     Pipe pipe46(Length=12, Diameter(displayUnit="mm") = 0.125)
                 "T1"
@@ -5428,7 +5428,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-244,-470})));
 
-    Modelica.Blocks.Sources.Constant const26(k=1.000000)
+    Modelica.Blocks.Sources.Constant const26(k=0.500000)
       annotation (Placement(transformation(extent={{-264,-460},{-250,-446}})));
     Modelica.Blocks.Tables.CombiTable1Ds F17_load(table=[0,-280444; 1,-151431; 2,-159137;
           3,-138572; 4,-126893; 5,-131255; 6,-148447; 7,-131398; 8,-132655; 9,-135341;
@@ -5543,7 +5543,7 @@ package HeatingNetwork_20250316 "供热管网"
           rotation=0,
           origin={-360,-358})));
 
-    Modelica.Blocks.Sources.Constant const27(k=0.026289)
+    Modelica.Blocks.Sources.Constant const27(k=0.920000)
       annotation (Placement(transformation(extent={{-392,-384},{-378,-370}})));
     Modelica.Blocks.Tables.CombiTable1Ds F19_load(table=[0,-280444; 1,-151431; 2,-159137;
           3,-138572; 4,-126893; 5,-131255; 6,-148447; 7,-131398; 8,-132655; 9,-135341;
@@ -6011,7 +6011,7 @@ package HeatingNetwork_20250316 "供热管网"
       annotation (Placement(transformation(extent={{190,226},{210,246}})));
     Modelica.Blocks.Sources.RealExpression realExpression14(y=time/3600)
       annotation (Placement(transformation(extent={{212,204},{192,224}})));
-    Modelica.Blocks.Sources.Constant const11(k=0.030798)
+    Modelica.Blocks.Sources.Constant const11(k=0.920000)
       annotation (Placement(transformation(extent={{186,290},{200,304}})));
     Modelica.Fluid.Sensors.Temperature temperature48(redeclare package Medium =
           Modelica.Media.Water.ConstantPropertyLiquidWater)
@@ -6977,7 +6977,7 @@ package HeatingNetwork_20250316 "供热管网"
           extent={{10,-10},{-10,10}},
           rotation=0,
           origin={112,-44})));
-    Modelica.Blocks.Sources.Constant const1(k=0.463971)
+    Modelica.Blocks.Sources.Constant const1(k=0.990000)
       annotation (Placement(transformation(extent={{88,-24},{108,-4}})));
     Modelica.Fluid.Sensors.Pressure pressure5(redeclare package Medium =
           Modelica.Media.Water.ConstantPropertyLiquidWater)

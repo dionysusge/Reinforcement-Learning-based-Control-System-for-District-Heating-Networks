@@ -112,14 +112,16 @@ def train_agent(config: Dict[str, Any], logger: logging.Logger):
     try:
         logger.info("正在创建环境...")
         env = HeatingEnvironmentEfficient()
-        logger.info("✓ 环境创建成功")
+        logger.info("环境创建成功")
         
         logger.info("正在创建训练器...")
+        # 将环境的instance_id传递给训练器配置
+        config['instance_id'] = env.instance_id
         trainer = TrainerEfficient(config)
-        logger.info("✓ 训练器创建成功")
+        logger.info("训练器创建成功")
         
     except Exception as e:
-        logger.error(f"✗ 环境或训练器创建失败: {e}")
+        logger.error(f"环境或训练器创建失败: {e}")
         import traceback
         logger.error(f"错误详情: {traceback.format_exc()}")
         return
@@ -136,7 +138,7 @@ def train_agent(config: Dict[str, Any], logger: logging.Logger):
                 # 重置环境
                 logger.info("正在重置环境...")
                 state = env.reset()
-                logger.info(f"✓ 环境重置成功，状态维度: {len(state)}")
+                logger.info(f"环境重置成功，状态维度: {len(state)}")
                 
                 episode_reward = 0
                 episode_length = 0
@@ -181,17 +183,20 @@ def train_agent(config: Dict[str, Any], logger: logging.Logger):
                 trainer.episode_rewards.append(episode_reward)
                 trainer.episode_lengths.append(episode_length)
                 
-                logger.info(f"✓ Episode {episode + 1} 完成: 奖励={episode_reward:.3f}, 长度={episode_length}")
+                # 记录到TensorBoard
+                trainer.log_episode_stats(episode_reward, episode_length)
+                
+                logger.info(f"Episode {episode + 1} 完成: 奖励={episode_reward:.3f}, 长度={episode_length}")
                 
                 # 更新最佳奖励
                 if episode_reward > best_reward:
                     best_reward = episode_reward
-                    logger.info(f"🎉 新的最佳奖励: {best_reward:.3f}")
+                    logger.info(f"新的最佳奖励: {best_reward:.3f}")
                 
                 # 获取并显示离线数据统计
                 try:
                     offline_stats = env.get_offline_data_stats()
-                    logger.info(f"✓ 离线数据统计: {offline_stats}")
+                    logger.info(f"离线数据统计: {offline_stats}")
                 except Exception as stats_error:
                     logger.warning(f"获取离线数据统计失败: {stats_error}")
                 
@@ -250,6 +255,8 @@ def train_agent(config: Dict[str, Any], logger: logging.Logger):
         logger.error(f"训练错误详情: {traceback.format_exc()}")
     finally:
         try:
+            # 关闭TensorBoard writer
+            trainer.close_tensorboard()
             env.close()
             logger.info("✓ 环境已安全关闭")
         except Exception as close_error:

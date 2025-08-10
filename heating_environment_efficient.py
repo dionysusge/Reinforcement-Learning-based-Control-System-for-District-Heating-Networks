@@ -18,6 +18,7 @@ from typing import Dict, Tuple, Any, List
 
 import numpy as np
 from DyMat import DyMatFile
+# 奖励函数将在运行时导入
 
 try:
     from dymola.dymola_interface import DymolaInterface
@@ -29,66 +30,73 @@ except ImportError:
 class HeatingEnvironmentEfficient:
     """
     供热网络强化学习环境 - 高效版本
-    
+
     特点:
     1. 基于成功的v2版本
     2. 移除不必要的模型检查步骤
     3. 增加离线数据保存功能
     4. 优化仿真流程
     """
-    
+
     def __init__(self, config_path: str = None):
         """
         初始化环境
-        
+
         Args:
             config_path: 配置文件路径
         """
         # 设置日志
         self.logger = logging.getLogger(__name__)
-        
+
         # 加载配置
         self.config = self._load_config(config_path)
-        
+
         # 环境参数 - 实际有效阀门数量
         valve_numbers = [i for i in range(1, 28) if i not in [8, 14, 15, 16]]
         self.num_buildings = len(valve_numbers)  # 实际阀门数量：23个（跳过8,14,15,16号）
         self.valve_numbers = valve_numbers
         self.max_steps = self.config.get('max_steps', 100)
         self.simulation_time = self.config.get('simulation_time', 3600)  # 仿真时间（秒）
-        
-        # 动作和观测空间
-        self.action_low = 0.0
-        self.action_high = 1.0
+
+        # 动作和观测空间 - 修改为50-100%开度范围
+        self.action_low = 0.5  # 最小阀门开度50%
+        self.action_high = 1.0  # 最大阀门开度100%
         self.observation_space_size = self.num_buildings * 4  # 流量、压力、供水温度、回水温度
-        
+
         # 工作目录和文件路径
         self.work_dir = os.path.dirname(os.path.abspath(__file__))
         self.model_path = os.path.join(self.work_dir, "HeatingNetwork_20250316.mo")
-        
+
         # Dymola接口
         self.dymola = None
         self.instance_id = int(time.time() * 1000) % 10000  # 实例ID
-        
+
         # 环境状态
         self.current_step = 0
         self.is_done = False
-        
+
         # 离线数据存储
         self.offline_data = []
         self.offline_data_dir = os.path.join(self.work_dir, "offline_data")
         os.makedirs(self.offline_data_dir, exist_ok=True)
         
+        # 创建仿真结果目录
+        self.simulation_results_dir = os.path.join(self.work_dir, "simulation_results")
+        self.mat_files_dir = os.path.join(self.simulation_results_dir, "mat_files")
+        os.makedirs(self.mat_files_dir, exist_ok=True)
+
+        # 奖励计算器将在首次使用时初始化
+
         # 初始化环境
         self._initialize_environment()
-        
+
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """
         加载配置文件
-        
+
         Args:
             config_path: 配置文件路径
-            
+
         Returns:
             Dict[str, Any]: 配置字典
         """
@@ -104,7 +112,7 @@ class HeatingEnvironmentEfficient:
                 'target_return_temp': 30.0,
                 'dymola_visible': False
             }
-    
+
     def _initialize_environment(self):
         """
         初始化环境和Dymola连接
@@ -115,7 +123,7 @@ class HeatingEnvironmentEfficient:
         except Exception as e:
             self.logger.error(f"环境初始化失败: {e}")
             raise
-    
+
     def _initialize_dymola(self):
         """
         初始化Dymola连接
@@ -123,19 +131,19 @@ class HeatingEnvironmentEfficient:
         try:
             if DymolaInterface is None:
                 raise ImportError("DymolaInterface未安装")
-                
+
             self.dymola = DymolaInterface()
-            
+
             # 设置工作目录
             self.dymola.cd(self.work_dir.replace('\\', '/'))
-            
+
             # 加载模型
             if not self.dymola.openModel(self.model_path.replace('\\', '/')):
                 error_log = self.dymola.getLastErrorLog()
                 raise Exception(f"模型加载失败: {error_log}")
-            
+
             self.logger.info(f"Dymola初始化成功，模型已加载: {self.model_path}")
-            
+
         except Exception as e:
             self.logger.error(f"Dymola初始化失败: {e}")
             if self.dymola:
@@ -145,63 +153,115 @@ class HeatingEnvironmentEfficient:
                     pass
                 self.dymola = None
             raise
-    
+
     def _modify_model_parameters(self, valve_openings: np.ndarray):
         """
         修改模型参数（阀门开度）
-        
+
         Args:
             valve_openings: 阀门开度数组，范围[0, 1]
         """
         try:
+            # 参数验证和清理
+            valve_openings = np.clip(valve_openings, 0.01, 0.99)  # 避免极值
+            valve_openings = np.nan_to_num(valve_openings, nan=0.5, posinf=0.99, neginf=0.01)
+            
             # 读取模型文件内容
             with open(self.model_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-                
+
             # 调试信息
             self.logger.debug(f"valve_openings长度: {len(valve_openings)}, valve_numbers长度: {len(self.valve_numbers)}")
             self.logger.debug(f"valve_numbers: {self.valve_numbers}")
-            
+
             # 修改阀门开度参数
             # 模型中的阀门开度通过const块的k参数控制，格式为: const1(k=0.5)
+            modified_count = 0
             for i, opening in enumerate(valve_openings):
                 if i >= len(self.valve_numbers):
                     self.logger.error(f"索引错误: i={i}, valve_numbers长度={len(self.valve_numbers)}")
                     break
                 valve_num = self.valve_numbers[i]
                 const_param = f"const{valve_num}"
+                
+                # 检查参数是否存在于文件中
+                if const_param not in content:
+                    self.logger.warning(f"未找到参数 {const_param} 进行替换")
+                    continue
+                
                 # 使用正则表达式查找并替换const块的k参数值
-                pattern = rf"({const_param}\(k=)([0-9]*\.?[0-9]+)(\))"
+                # 更宽松的正则表达式，支持科学计数法和更多格式
+                pattern = rf"({const_param}\(k=)([0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)(\))"
                 replacement = rf"\g<1>{opening:.6f}\g<3>"
-                content = re.sub(pattern, replacement, content)
+                
+                # 先检查是否能找到该参数
+                match = re.search(pattern, content)
+                if match:
+                    # 提取当前的k值
+                    current_value = float(match.group(2))
+                    new_value = opening
+                    
+                    self.logger.debug(f"找到参数 {const_param}: {match.group(0)}")
+                    
+                    # 检查值是否需要更新
+                    if abs(current_value - new_value) < 1e-6:
+                        self.logger.debug(f"参数 {const_param} 值未变化: {current_value:.6f}")
+                        continue
+                    
+                    new_content = re.sub(pattern, replacement, content)
+                    if new_content != content:
+                        content = new_content
+                        modified_count += 1
+                        self.logger.debug(f"成功修改参数 {const_param}: {current_value:.6f} -> {new_value:.6f}")
+                    else:
+                        # 真正的替换失败
+                        self.logger.warning(f"参数 {const_param} 替换失败")
+                        self.logger.warning(f"原始匹配: {match.group(0)}")
+                        self.logger.warning(f"当前值: {current_value:.6f}, 目标值: {new_value:.6f}")
+                        self.logger.warning(f"替换模式: {replacement}")
+                else:
+                    # 尝试更详细的调试
+                    debug_pattern = rf"{const_param}\([^)]*\)"
+                    matches = re.findall(debug_pattern, content)
+                    if matches:
+                        self.logger.warning(f"找到参数 {const_param} 但格式不匹配: {matches[:3]}")
+                    else:
+                        self.logger.warning(f"完全未找到参数 {const_param}")
+
+            # 验证修改结果
+            if modified_count == 0:
+                self.logger.error("没有成功修改任何参数")
+                return False
                 
             # 写回修改后的内容
             with open(self.model_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-                
-            self.logger.debug(f"已修改模型参数，阀门开度: {valve_openings}")
-            
+
+            self.logger.debug(f"已修改模型参数，成功修改{modified_count}个阀门，开度: {valve_openings}")
+            return True
+
         except Exception as e:
             self.logger.error(f"修改模型参数失败: {e}")
+            return False
             raise
-    
+
     def _run_simulation(self) -> bool:
         """
         运行Dymola仿真（高效版本，跳过模型检查）
-        
+
         Returns:
             bool: 仿真是否成功
         """
         try:
             # 设置工作目录
             self.dymola.cd(self.work_dir.replace('\\', '/'))
-            
+
             # 重新加载修改后的模型
             if not self.dymola.openModel(self.model_path.replace('\\', '/')):
                 error_log = self.dymola.getLastErrorLog()
                 self.logger.error(f"重新加载模型失败: {error_log}")
                 return False
-            
+
             # 直接运行仿真，跳过模型检查步骤
             model_name = "HeatingNetwork_20250316.HeatingNetWork_Case01"
             success = self.dymola.simulateModel(
@@ -211,51 +271,55 @@ class HeatingEnvironmentEfficient:
                 numberOfIntervals=100,
                 tolerance=1e-4
             )
-            
+
             # 检查结果文件是否存在（更可靠的成功判断）
             default_result = os.path.join(self.work_dir, "dsres.mat")
-            target_result = os.path.join(self.work_dir, "simulation_results", "mat_files", f"dsres_instance_{self.instance_id}.mat")
-            
+            target_result = os.path.join(self.mat_files_dir, f"dsres_instance_{self.instance_id}.mat")
+
             # 如果结果文件存在，认为仿真成功（忽略Dymola的警告）
             if os.path.exists(default_result):
-                if os.path.exists(target_result):
-                    os.remove(target_result)
-                os.rename(default_result, target_result)
-                self.logger.debug(f"结果文件已重命名为: {target_result}")
-                success = True  # 强制设置为成功
+                try:
+                    if os.path.exists(target_result):
+                        os.remove(target_result)
+                    os.rename(default_result, target_result)
+                    self.logger.debug(f"结果文件已重命名为: {target_result}")
+                    success = True  # 强制设置为成功
+                except Exception as e:
+                    self.logger.error(f"文件重命名失败: {e}")
+                    success = False
             else:
                 success = False
-            
+
             if not success:
                 error_log = self.dymola.getLastErrorLog()
                 self.logger.error(f"仿真失败，无结果文件: {error_log}")
                 return False
-                
+
             self.logger.debug("仿真完成")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"仿真运行异常: {e}")
             return False
-    
+
     def _read_simulation_results(self) -> Dict[str, np.ndarray]:
         """
         读取仿真结果
-        
+
         Returns:
             Dict[str, np.ndarray]: 仿真结果数据
         """
         try:
-            result_file = os.path.join("simulation_results", "mat_files", f"dsres_instance_{self.instance_id}.mat")
+            result_file = os.path.join(self.mat_files_dir, f"dsres_instance_{self.instance_id}.mat")
             result_path = os.path.join(self.work_dir, result_file)
-            
+
             if not os.path.exists(result_path):
                 self.logger.error(f"结果文件不存在: {result_path}")
                 return {}
-                
+
             # 使用DyMat读取结果
             dymat = DyMatFile(result_path)
-            
+
             # 定义需要读取的变量
             variables = [
                 # 阀门开度
@@ -269,10 +333,10 @@ class HeatingEnvironmentEfficient:
                 # 阀门入口温度
                 *[f'valveIncompressible{self.valve_numbers[i]}.port_a_T' for i in range(self.num_buildings)]
             ]
-            
+            print(variables)
             results = {}
             available_vars = dymat.names()
-            
+
             for var in variables:
                 if var in available_vars:
                     try:
@@ -284,29 +348,29 @@ class HeatingEnvironmentEfficient:
                 else:
                     self.logger.warning(f"变量 {var} 不存在于结果中")
                     results[var] = np.array([0.0])
-                    
+
             return results
-            
+
         except Exception as e:
             self.logger.error(f"读取仿真结果失败: {e}")
             return {}
-    
+
     def _calculate_state(self, results: Dict[str, np.ndarray]) -> np.ndarray:
         """
         从仿真结果计算状态向量
-        
+
         Args:
             results: 仿真结果字典
-            
+
         Returns:
             np.ndarray: 状态向量 [流量1, 压力1, 供水温度1, 回水温度1, ...]
         """
         try:
             state = np.zeros(self.observation_space_size)
-            
+
             for i in range(self.num_buildings):
                 valve_num = self.valve_numbers[i]
-                
+
                 # 流量（m3/s，使用阀门自身的V_flow变量）
                 flow_var = f'valveIncompressible{valve_num}.V_flow'
                 if flow_var in results and len(results[flow_var]) > 0:
@@ -314,134 +378,70 @@ class HeatingEnvironmentEfficient:
                     state[i * 4] = max(0, flow) * 1000.0  # 转换为L/s并归一化
                 else:
                     state[i * 4] = 0.0  # 如果没有流量数据，设为0
-                
+
                 # 压力（Pa）
                 pressure_var = f'valveIncompressible{valve_num}.port_b.p'
                 if pressure_var in results and len(results[pressure_var]) > 0:
                     pressure = results[pressure_var][-1]
                     state[i * 4 + 1] = max(0, (pressure - 100000) / 500000)  # 归一化
-                
+
                 # 供水温度（K转换为°C，然后归一化）
                 supply_temp_var = f'valveIncompressible{valve_num}.port_a_T'
                 if supply_temp_var in results and len(results[supply_temp_var]) > 0:
                     temp_k = results[supply_temp_var][-1]
                     temp_c = temp_k - 273.15
                     state[i * 4 + 2] = max(0, min(1, temp_c / 100.0))  # 归一化到[0, 1]
-                
+
                 # 回水温度（K转换为°C，然后归一化）
                 return_temp_var = f'valveIncompressible{valve_num}.port_b_T'
                 if return_temp_var in results and len(results[return_temp_var]) > 0:
                     temp_k = results[return_temp_var][-1]
                     temp_c = temp_k - 273.15
                     state[i * 4 + 3] = max(0, min(1, temp_c / 100.0))  # 归一化到[0, 1]
-            
+
             return state
-            
+
         except Exception as e:
             self.logger.error(f"计算状态失败: {e}")
             return np.zeros(self.observation_space_size)
-    
+
     def _calculate_reward(self, state: np.ndarray, action: np.ndarray) -> float:
         """
-        计算奖励函数（目标：所有楼栋回水温度保持在30°C，重视温度一致性）
-        
+        计算新的奖励函数
+        权重分配：阀门开度50%、回水温度一致性50%
+        阀门开度要尽可能大，回水温度在20-30℃区间内保持一致
+        9号楼的阀门开度必须保持在90以上
+
         Args:
             state: 当前状态
-            action: 执行的动作
-            
+            action: 执行的动作（0-1范围）
+
         Returns:
             float: 奖励值
         """
         try:
-            reward = 0.0
-            target_return_temp = self.config.get('target_return_temp', 30.0)  # 目标回水温度30°C
+            # 使用新的奖励计算器
+            if not hasattr(self, 'reward_calculator'):
+                from smooth_reward_functions import create_smooth_reward_calculator
+                self.reward_calculator = create_smooth_reward_calculator()
             
-            # 提取所有回水温度
+            # 提取回水温度
             return_temps = []
+            
             for i in range(self.num_buildings):
-                return_temp = state[i * 4 + 3] * 100.0  # 反归一化到摄氏度
+                return_temp = state[i * 4 + 3] * 100.0  # 反归一化回水温度
                 return_temps.append(return_temp)
             
-            return_temps = np.array(return_temps)
+            # 将动作转换为百分比（0-100）
+            valve_openings = action * 100.0
             
-            # 1. 回水温度目标奖励（权重最高）
-            temp_errors = np.abs(return_temps - target_return_temp)
-            for temp_error in temp_errors:
-                if temp_error <= 0.5:  # 误差在0.5度以内
-                    reward += 3.0
-                elif temp_error <= 1.0:  # 误差在1度以内
-                    reward += 2.0
-                elif temp_error <= 2.0:  # 误差在2度以内
-                    reward += 1.0
-                elif temp_error <= 3.0:  # 误差在3度以内
-                    reward += 0.2
-                else:  # 误差超过3度
-                    reward -= temp_error * 0.5
+            # 计算奖励
+            reward = self.reward_calculator.calculate_reward(
+                np.array(return_temps),
+                valve_openings
+            )
             
-            # 2. 温度一致性奖励（非常重要）
-            temp_std = np.std(return_temps)
-            temp_range = np.max(return_temps) - np.min(return_temps)
-            
-            if temp_std <= 0.5:  # 标准差小于0.5度
-                reward += 5.0
-            elif temp_std <= 1.0:  # 标准差小于1度
-                reward += 3.0
-            elif temp_std <= 2.0:  # 标准差小于2度
-                reward += 1.0
-            else:
-                reward -= temp_std * 2.0  # 惩罚温度不一致
-            
-            if temp_range <= 1.0:  # 温度范围小于1度
-                reward += 3.0
-            elif temp_range <= 2.0:  # 温度范围小于2度
-                reward += 1.5
-            elif temp_range <= 3.0:  # 温度范围小于3度
-                reward += 0.5
-            else:
-                reward -= temp_range * 1.0  # 惩罚温度范围过大
-            
-            # 3. 最不利楼栋9号特别奖励
-            if 9 in self.valve_numbers:
-                valve_9_index = self.valve_numbers.index(9)
-                valve_9_temp = return_temps[valve_9_index]
-                valve_9_opening = action[valve_9_index]
-                
-                # 9号楼栋温度接近30度的奖励
-                valve_9_error = abs(valve_9_temp - target_return_temp)
-                if valve_9_error <= 0.5:
-                    reward += 2.0
-                elif valve_9_error <= 1.0:
-                    reward += 1.0
-                
-                # 9号阀门开度在90%以上的奖励
-                if valve_9_opening >= 0.9:
-                    reward += 1.0
-            
-            # 4. 供水温度合理性检查
-            for i in range(self.num_buildings):
-                supply_temp = state[i * 4 + 2] * 100.0  # 反归一化到摄氏度
-                return_temp = return_temps[i]
-                
-                if supply_temp < return_temp:  # 供水温度不能低于回水温度
-                    reward -= 2.0
-                elif supply_temp > 85:  # 供水温度不宜过高
-                    reward -= 1.0
-                elif 40 <= supply_temp <= 70:  # 合理的供水温度范围
-                    reward += 0.2
-            
-            # 5. 流量稳定性奖励
-            flows = state[::4]  # 每4个状态中的第1个是流量
-            if np.all(flows > 0.05):  # 确保所有楼栋都有足够流量
-                reward += 1.0
-            else:
-                reward -= 1.0  # 惩罚流量不足
-            
-            # 6. 能耗控制（适度惩罚过度开启）
-            avg_opening = np.mean(action)
-            if avg_opening > 0.8:  # 平均开度过高
-                reward -= 0.5
-            
-            return reward
+            return float(reward)
             
         except Exception as e:
             self.logger.error(f"计算奖励失败: {e}")
@@ -484,11 +484,27 @@ class HeatingEnvironmentEfficient:
             self.is_done = False
             self.instance_id = int(time.time() * 1000) % 10000  # 更新实例ID
             
-            # 设置初始阀门开度
-            initial_openings = np.random.uniform(0.3, 0.7, self.num_buildings)
+            # 设置初始阀门开度（50%-100%范围）
+            initial_openings = np.random.uniform(0.5, 1.0, self.num_buildings)
+            
+            # 确保最不利楼栋9号楼的两个阀门开度在90%以上
+            # 9号楼对应const12和const13，在valve_numbers中找到12和13号阀门
+            if 12 in self.valve_numbers:
+                valve_12_index = self.valve_numbers.index(12)
+                if initial_openings[valve_12_index] < 0.9:
+                    initial_openings[valve_12_index] = 0.9
+                    self.logger.info(f"12号阀门开度调整至90%以上: {initial_openings[valve_12_index]:.3f}")
+            
+            if 13 in self.valve_numbers:
+                valve_13_index = self.valve_numbers.index(13)
+                if initial_openings[valve_13_index] < 0.9:
+                    initial_openings[valve_13_index] = 0.9
+                    self.logger.info(f"13号阀门开度调整至90%以上: {initial_openings[valve_13_index]:.3f}")
             
             # 修改模型参数
-            self._modify_model_parameters(initial_openings)
+            if not self._modify_model_parameters(initial_openings):
+                self.logger.error("模型参数修改失败")
+                return np.zeros(self.observation_space_size)
             
             # 运行仿真
             if not self._run_simulation():
@@ -534,16 +550,28 @@ class HeatingEnvironmentEfficient:
             # 限制动作范围
             action = np.clip(action, self.action_low, self.action_high)
             
-            # 确保最不利楼栋9-2的阀门开度在90%以上
-            # 找到9号阀门在action数组中的索引
-            if 9 in self.valve_numbers:
-                valve_9_index = self.valve_numbers.index(9)
-                if action[valve_9_index] < 0.9:
-                    action[valve_9_index] = 0.9  # 确保9号阀门开度至少90%
-                    self.logger.info(f"已调整9号阀门开度至90%以上: {action[valve_9_index]:.3f}")
+            # 所有阀门开度现在已经限制在50-100%范围内
+            # 对于关键阀门12号和13号，仍然确保在90%以上
+            if 12 in self.valve_numbers:
+                valve_12_index = self.valve_numbers.index(12)
+                if action[valve_12_index] < 0.9:
+                    action[valve_12_index] = 0.9  # 确保12号阀门开度至少90%
+                    self.logger.info(f"已调整12号阀门开度至90%以上: {action[valve_12_index]:.3f}")
+            
+            if 13 in self.valve_numbers:
+                valve_13_index = self.valve_numbers.index(13)
+                if action[valve_13_index] < 0.9:
+                    action[valve_13_index] = 0.9  # 确保13号阀门开度至少90%
+                    self.logger.info(f"已调整13号阀门开度至90%以上: {action[valve_13_index]:.3f}")
             
             # 修改模型参数
-            self._modify_model_parameters(action)
+            if not self._modify_model_parameters(action):
+                self.logger.error("模型参数修改失败")
+                state = np.zeros(self.observation_space_size)
+                reward = -1.0
+                self.is_done = True
+                info = {'parameter_modification_failed': True}
+                return state, reward, self.is_done, info
             
             # 运行仿真
             simulation_success = self._run_simulation()
@@ -612,12 +640,18 @@ class HeatingEnvironmentEfficient:
             for line in temp_info_lines:
                 self.logger.info(line)
             
-            # 特别关注9号阀门（最不利楼栋）
-            if 9 in self.valve_numbers:
-                valve_9_index = self.valve_numbers.index(9)
-                valve_9_opening = action[valve_9_index] * 100
-                valve_9_temp = return_temps[valve_9_index]
-                self.logger.info(f"  最不利楼栋9号: 开度={valve_9_opening:.1f}%, 回水温度={valve_9_temp:.1f}°C")
+            # 特别关注12号和13号阀门（最不利楼栋9号楼）
+            if 12 in self.valve_numbers:
+                valve_12_index = self.valve_numbers.index(12)
+                valve_12_opening = action[valve_12_index] * 100
+                valve_12_temp = return_temps[valve_12_index]
+                self.logger.info(f"  最不利楼栋12号: 开度={valve_12_opening:.1f}%, 回水温度={valve_12_temp:.1f}°C")
+            
+            if 13 in self.valve_numbers:
+                valve_13_index = self.valve_numbers.index(13)
+                valve_13_opening = action[valve_13_index] * 100
+                valve_13_temp = return_temps[valve_13_index]
+                self.logger.info(f"  最不利楼栋13号: 开度={valve_13_opening:.1f}%, 回水温度={valve_13_temp:.1f}°C")
             
             # 构建信息字典
             info = {
@@ -721,7 +755,7 @@ if __name__ == "__main__":
         
         # 执行几步
         for i in range(3):
-            action = np.random.uniform(0.3, 0.7, env.num_buildings)
+            action = np.random.uniform(0.5, 1.0, env.num_buildings)  # 修改为50-100%范围
             state, reward, done, info = env.step(action)
             print(f"步骤 {i+1}: 奖励={reward:.3f}, 完成={done}")
             

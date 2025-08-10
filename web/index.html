@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>训练结果查看器 - Dionysus</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔥 供热系统强化学习训练结果查看器</h1>
+            <p class="subtitle">作者: Dionysus | 日期: 2025-01-09</p>
+        </header>
+
+        <main>
+            <div class="control-panel">
+                <div class="session-selector">
+                    <label for="sessionSelect">选择训练会话:</label>
+                    <select id="sessionSelect">
+                        <option value="">请选择训练会话...</option>
+                    </select>
+                    <button id="refreshBtn" class="btn btn-secondary">🔄 刷新</button>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="startTensorboardBtn" class="btn btn-primary" disabled>
+                        📊 启动 TensorBoard
+                    </button>
+                    <button id="stopTensorboardBtn" class="btn btn-danger" disabled>
+                        🛑 停止 TensorBoard
+                    </button>
+                    <button id="openBrowserBtn" class="btn btn-success" disabled>
+                        🌐 打开浏览器
+                    </button>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <div class="session-info">
+                    <h3>📋 会话信息</h3>
+                    <div id="sessionInfo">
+                        <p>请先选择一个训练会话</p>
+                    </div>
+                </div>
+
+                <div class="status-info">
+                    <h3>🔧 服务状态</h3>
+                    <div id="statusInfo">
+                        <div class="status-item">
+                            <span class="status-label">TensorBoard:</span>
+                            <span id="tensorboardStatus" class="status-value status-stopped">未启动</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">端口:</span>
+                            <span id="portInfo" class="status-value">-</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">访问地址:</span>
+                            <span id="urlInfo" class="status-value">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="logs-panel">
+                <h3>📝 操作日志</h3>
+                <div id="logsContainer">
+                    <div class="log-entry log-info">
+                        <span class="log-time">[系统]</span>
+                        <span class="log-message">页面已加载，等待用户操作...</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Dionysus. 供热系统强化学习项目</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
