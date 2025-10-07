@@ -1,0 +1,81 @@
+{
+  "env_config": {
+    "state_dim": 92,
+    "action_dim": 23,
+    "action_bound": 1.0,
+    "max_episode_steps": 50,
+    "reward_scale": 0.5,
+    "use_real_data_rewards": true
+  },
+  "iql_config": {
+    "model_path": "models/iql_model_final.pth",
+    "lr_q": 3e-4,
+    "lr_v": 3e-4,
+    "lr_policy": 1e-4,
+    "gamma": 0.99,
+    "tau": 0.7,
+    "beta": 3.0,
+    "polyak": 0.005,
+    "max_grad_norm": 0.5,
+    "use_cql": false,
+    "cql_alpha": 1.0,
+    "use_lr_scheduler": false,
+    "lr_scheduler_type": "exponential",
+    "lr_decay_rate": 0.995,
+    "lr_decay_steps": 100
+  },
+  "network_config": {
+    "hidden_dims": [512, 512, 256],
+    "activation": "relu",
+    "dropout_rate": 0.1,
+    "use_layer_norm": false,
+    "initialization": "xavier_uniform",
+    "weight_decay": 0.0
+  },
+  "simulation_config": {
+    "num_buildings": 23,
+    "max_steps": 50,
+    "simulation_time": 3600,
+    "target_return_temp": 30.0,
+    "dymola_visible": false,
+    "mo_file_path": "F:/A1_python_project/heating_rl_sys/model_modification_rl/efficient_rl/HeatingNetwork_20250316.mo",
+    "update_interval": 5,
+    "action_low": 0.5,
+    "action_high": 1.0,
+    "valve_numbers": [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+  },
+  "simulation_variables": {
+    "state_variables": {
+      "flow_rates": ["valve1.m_flow", "valve2.m_flow", "valve3.m_flow", "valve4.m_flow", "valve5.m_flow", "valve6.m_flow", "valve7.m_flow", "valve9.m_flow", "valve10.m_flow", "valve11.m_flow", "valve12.m_flow", "valve13.m_flow", "valve17.m_flow", "valve18.m_flow", "valve19.m_flow", "valve20.m_flow", "valve21.m_flow", "valve22.m_flow", "valve23.m_flow", "valve24.m_flow", "valve25.m_flow", "valve26.m_flow", "valve27.m_flow"],
+      "pressures": ["valve1.dp", "valve2.dp", "valve3.dp", "valve4.dp", "valve5.dp", "valve6.dp", "valve7.dp", "valve9.dp", "valve10.dp", "valve11.dp", "valve12.dp", "valve13.dp", "valve17.dp", "valve18.dp", "valve19.dp", "valve20.dp", "valve21.dp", "valve22.dp", "valve23.dp", "valve24.dp", "valve25.dp", "valve26.dp", "valve27.dp"],
+      "supply_temps": ["room1.T_supply", "room2.T_supply", "room3.T_supply", "room4.T_supply", "room5.T_supply", "room6.T_supply", "room7.T_supply", "room9.T_supply", "room10.T_supply", "room11.T_supply", "room12.T_supply", "room13.T_supply", "room17.T_supply", "room18.T_supply", "room19.T_supply", "room20.T_supply", "room21.T_supply", "room22.T_supply", "room23.T_supply", "room24.T_supply", "room25.T_supply", "room26.T_supply", "room27.T_supply"],
+      "return_temps": ["room1.T_return", "room2.T_return", "room3.T_return", "room4.T_return", "room5.T_return", "room6.T_return", "room7.T_return", "room9.T_return", "room10.T_return", "room11.T_return", "room12.T_return", "room13.T_return", "room17.T_return", "room18.T_return", "room19.T_return", "room20.T_return", "room21.T_return", "room22.T_return", "room23.T_return", "room24.T_return", "room25.T_return", "room26.T_return", "room27.T_return"]
+    },
+    "action_variables": ["valve1.opening", "valve2.opening", "valve3.opening", "valve4.opening", "valve5.opening", "valve6.opening", "valve7.opening", "valve9.opening", "valve10.opening", "valve11.opening", "valve12.opening", "valve13.opening", "valve17.opening", "valve18.opening", "valve19.opening", "valve20.opening", "valve21.opening", "valve22.opening", "valve23.opening", "valve24.opening", "valve25.opening", "valve26.opening", "valve27.opening"]
+  },
+  "similarity_matching_config": {
+    "similarity_k": 100,
+    "similarity_weight": 0.1,
+    "similarity_threshold": 0.3,
+    "use_full_offline_data": true,
+    "enable_state_update": true,
+    "gaussian_sigma": 0.1,
+    "quality_threshold": 0.2,
+    "hard_distance_multiplier": 5.0
+  },
+  "device": "cuda",
+  "use_similarity_matching": true,
+  "matching_method": "euclidean",
+  "enable_action_replacement": true,
+  "enable_state_update": true,
+  "logging": {
+    "level": "INFO",
+    "log_dir": "logs",
+    "enable_tensorboard": true
+  },
+  "env_config_path": "config/config_efficient.json",
+  "mo_file_path": "F:/A1_python_project/heating_rl_sys/model_modification_rl/efficient_rl/HeatingNetwork_20250316.mo",
+  "simulation_interval": 5.0,
+  "max_iterations": 20,
+  "results_save_path": "iql_simulation_results.json"
+}

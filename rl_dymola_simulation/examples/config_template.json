@@ -1,0 +1,120 @@
+{
+  "_comment": "强化学习-Dymola闭环仿真配置模板",
+  
+  "base_dir": "f:/A1_python_project/heating_rl_sys/model_modification_rl/efficient_rl",
+  
+  "rl_model": {
+    "_comment": "强化学习模型配置",
+    "model_path": "reinforcement_learning/models/ppo_model.pth",
+    "model_type": "ppo",
+    "state_dim": 60,
+    "action_dim": 30,
+    "state_mean_path": "reinforcement_learning/models/state_mean.npy",
+    "state_std_path": "reinforcement_learning/models/state_std.npy",
+    "action_mean_path": "reinforcement_learning/models/action_mean.npy",
+    "action_std_path": "reinforcement_learning/models/action_std.npy"
+  },
+  
+  "dymola": {
+    "_comment": "Dymola仿真配置",
+    "model_file": "../models/HeatingNetwork_20250316.mo",
+    "dymola_exe": null,
+    "simulation_time": 3600,
+    "time_step": 60,
+    "tolerance": 1e-6,
+    "solver": "Dassl",
+    "output_interval": 60
+  },
+  
+  "control": {
+    "_comment": "控制循环配置",
+    "max_iterations": 30,
+    "convergence_threshold": 0.005,
+    "target_temperature": 45.0,
+    "temperature_tolerance": 2.0,
+    "min_valve_opening": 0.1,
+    "max_valve_opening": 1.0,
+    "valve_change_limit": 0.2,
+    "convergence_window": 3,
+    "performance_weights": {
+      "temperature_deviation": 1.0,
+      "temperature_variance": 0.5,
+      "valve_usage": 0.1
+    }
+  },
+
+  "control_loop": {
+    "max_iterations": 50,
+    "convergence_threshold": 0.01,
+    "valve_change_limit": 0.1,
+    "performance_metrics": {
+      "target_std_dev": 2.3,
+      "target_temp_diff": 8.0,
+      "weight_std_dev": 0.6,
+      "weight_temp_diff": 0.4
+    },
+    "early_stopping": {
+      "enabled": true,
+      "patience": 5,
+      "min_improvement": 0.001
+    },
+    "strategy_search": {
+      "enabled": true,
+      "max_candidates": 100,
+      "evolution_generations": 20,
+      "population_size": 50,
+      "mutation_rate": 0.1,
+      "crossover_rate": 0.8,
+      "use_ppo_baseline": true,
+      "performance_threshold": {
+        "std_dev_max": 2.3,
+        "temp_diff_max": 8.0
+      }
+    }
+  },
+  
+  "buildings": {
+    "_comment": "楼栋配置",
+    "count": 30,
+    "valve_prefix": "valve_",
+    "temp_sensor_prefix": "temp_",
+    "flow_sensor_prefix": "flow_",
+    "supply_temp_sensor": "supply_temp"
+  },
+  
+  "output": {
+    "_comment": "输出配置",
+    "output_dir": "simulation_output",
+    "save_intermediate": true,
+    "save_plots": true,
+    "plot_format": "png",
+    "plot_dpi": 300,
+    "excel_report": true,
+    "json_report": true,
+    "cleanup_temp_files": true
+  },
+  
+  "logging": {
+    "_comment": "日志配置",
+    "level": "INFO",
+    "console_output": true,
+    "file_output": true,
+    "log_dir": "logs",
+    "max_log_files": 10
+  },
+  
+  "advanced": {
+    "_comment": "高级配置选项",
+    "parallel_simulation": false,
+    "simulation_timeout": 1800,
+    "retry_failed_simulations": true,
+    "max_retries": 3,
+    "backup_original_model": true,
+    "validate_simulation_results": true,
+    "early_stopping": {
+      "enabled": true,
+      "patience": 5,
+      "min_improvement": 0.001
+    }
+  }
+}
